@@ -97,8 +97,12 @@ export class AlbumService {
       );
     }
 
-    if (!album.coverImage && driveImages.length > 0) {
-      album.coverImage = driveImages[0].thumbnailUrl;
+    if (driveImages.length > 0) {
+      // Store the stable file ID, not the short-lived thumbnailLink — the
+      // actual display URL is computed on read via buildDriveThumbnailUrl().
+      // Always refresh (not just when unset) so albums synced before this
+      // fix self-heal instead of keeping a stale/expired URL forever.
+      album.coverImage = driveImages[0].id;
       await this.albumRepository.save(album);
     } else {
       // touch updatedAt

@@ -13,3 +13,19 @@ export function extractDriveFolderId(folderUrlOrId: string): string {
   }
   return folderUrlOrId.trim();
 }
+
+/**
+ * Builds a stable, non-expiring image URL for a Google Drive file, given its
+ * file ID. Unlike the `thumbnailLink`/`webContentLink` fields returned by the
+ * Drive API (which are short-lived, typically valid for under an hour), this
+ * endpoint keeps working indefinitely as long as the file stays shared as
+ * "Anyone with the link".
+ *
+ * `size` controls the longest edge in pixels of the returned image.
+ */
+export function buildDriveThumbnailUrl(
+  driveFileId: string,
+  size = 1000,
+): string {
+  return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w${size}`;
+}

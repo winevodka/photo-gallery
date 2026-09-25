@@ -15,6 +15,22 @@ import { ImageService } from '../images/image.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AdminGuard } from '../common/guards/admin.guard';
+import { buildDriveThumbnailUrl } from '../common/utils/drive-url.util';
+import { Album } from './album.entity';
+
+function withCoverImageUrl(album: Album) {
+  // Albums synced before this fix have a stale, already-expired URL stored
+  // directly in coverImage. Treat those as unset until the next sync
+  // refreshes them to a bare driveFileId.
+  const isLegacyUrl = album.coverImage?.includes('://');
+  return {
+    ...album,
+    coverImage:
+      album.coverImage && !isLegacyUrl
+        ? buildDriveThumbnailUrl(album.coverImage, 800)
+        : null,
+  };
+}
 
 @Controller('albums')
 export class AlbumController {
@@ -29,7 +45,12 @@ export class AlbumController {
       page ?? 1,
       limit ?? 20,
     );
-    return { items, total, page: page ?? 1, limit: limit ?? 20 };
+    return {
+      items: items.map(withCoverImageUrl),
+      total,
+      page: page ?? 1,
+      limit: limit ?? 20,
+    };
   }
 
   @Get(':id')
@@ -44,7 +65,7 @@ export class AlbumController {
       limit ?? 40,
     );
     return {
-      ...album,
+      ...withCoverImageUrl(album),
       images: { items, total, page: page ?? 1, limit: limit ?? 40 },
     };
   }

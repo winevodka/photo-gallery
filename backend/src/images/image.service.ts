@@ -2,6 +2,20 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Image } from './image.entity';
+import { buildDriveThumbnailUrl } from '../common/utils/drive-url.util';
+
+/**
+ * Drive's `thumbnailLink`/`webContentLink` values are short-lived, so we
+ * never trust the stored columns for display \u2014 URLs are always recomputed
+ * from the stable `driveFileId` instead.
+ */
+function withStableUrls(image: Image): Image {
+  return {
+    ...image,
+    thumbnailUrl: buildDriveThumbnailUrl(image.driveFileId, 800),
+    imageUrl: buildDriveThumbnailUrl(image.driveFileId, 2048),
+  };
+}
 
 @Injectable()
 export class ImageService {
@@ -15,7 +29,7 @@ export class ImageService {
     if (!image) {
       throw new NotFoundException(`Image ${id} not found`);
     }
-    return image;
+    return withStableUrls(image);
   }
 
   async findByAlbum(
@@ -29,6 +43,6 @@ export class ImageService {
       skip: (page - 1) * limit,
       take: limit,
     });
-    return { items, total };
+    return { items: items.map(withStableUrls), total };
   }
 }
