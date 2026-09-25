@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Album } from './album.entity';
@@ -9,6 +9,8 @@ import { extractDriveFolderId } from '../common/utils/drive-url.util';
 
 @Injectable()
 export class AlbumService {
+  private readonly logger = new Logger(AlbumService.name);
+
   constructor(
     @InjectRepository(Album)
     private readonly albumRepository: Repository<Album>,
@@ -26,10 +28,20 @@ export class AlbumService {
       coverImage: dto.coverImage ?? null,
     });
     const saved = await this.albumRepository.save(album);
-    // Kick off an initial sync so the album has photos right away.
-    await this.sync(saved.id);
+    // Kick off an initial sync so the album has photos right away. If the
+    // sync fails (e.g. folder not shared yet, transient Drive API error),
+    // don't fail album creation — the album already exists and can be
+    // retried later via the sync endpoint/button.
+    try {
+      await this.sync(saved.id);
+    } catch (error) {
+      this.logger.error(
+        `Initial sync failed for album ${saved.id}: ${(error as Error).message}`,
+      );
+    }
     return this.findOne(saved.id);
   }
+
 
   async findAll(
     page: number,
