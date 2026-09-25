@@ -51,6 +51,13 @@ export class AlbumService {
     return album;
   }
 
+  async remove(id: string): Promise<void> {
+    const album = await this.findOne(id);
+    // Image rows have onDelete: 'CASCADE' on their album relation, so this
+    // also removes all synced images for the album.
+    await this.albumRepository.remove(album);
+  }
+
   /**
    * Fetches the current file list from Google Drive for the album's folder
    * and upserts image metadata into the database.

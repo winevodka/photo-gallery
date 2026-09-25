@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -52,5 +55,11 @@ export class AlbumController {
   @Post(':id/sync')
   sync(@Param('id') id: string) {
     return this.albumService.sync(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    return this.albumService.remove(id);
   }
 }
