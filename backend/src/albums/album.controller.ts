@@ -8,11 +8,13 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AlbumService } from './album.service';
 import { ImageService } from '../images/image.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @Controller('albums')
 export class AlbumController {
@@ -48,16 +50,19 @@ export class AlbumController {
   }
 
   @Post()
+  @UseGuards(AdminGuard)
   create(@Body() dto: CreateAlbumDto) {
     return this.albumService.create(dto);
   }
 
   @Post(':id/sync')
+  @UseGuards(AdminGuard)
   sync(@Param('id') id: string) {
     return this.albumService.sync(id);
   }
 
   @Delete(':id')
+  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.albumService.remove(id);
